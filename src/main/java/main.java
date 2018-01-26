@@ -1,11 +1,13 @@
-import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.*;
 
 public class main {
+
     public static void main(String args[])
     {
-        Scanner scanner1 = new Scanner("public class idf { public static void main ( ) { int idf ; } } EOF");
+
+        Compiler_Scanner compilerScanner1 = new Compiler_Scanner("public class idf { public static void main ( ) { int idf ; } } EOF");
         Parser parser1 = new Parser();
         parser1.something();
 
@@ -31,11 +33,11 @@ public class main {
                 "}\n" +
                 "EOF";
 
-        String S = " ";
-        while (!s.equals(""))
-        {
-
-        }
-        System.out.println(S);
+//        String S = " ";
+//        while (!s.equals(""))
+//        {
+//
+//        }
+//        System.out.println(S);
     }
 }

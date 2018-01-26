@@ -2,7 +2,7 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-class Scanner {
+class Compiler_Scanner {
     private static ArrayList<Pattern> regexes = new ArrayList<Pattern>();
     private static String input;
 
@@ -33,31 +33,8 @@ class Scanner {
         return null;
     }
 
-    static String firstInput() {
-        for (Pattern p : regexes)
-        {
-            Matcher m = p.matcher(input);
-            if (m.find())
-            {
-                if (p.pattern() == "^([a-zA-Z][a-zA-Z0-9_]*)")
-                {
-                    return "idf";
-                }
-                else if (p.pattern() == "^([0-9]+)")
-                {
-                    return "intt";
-                }
-                else
-                {
-                    return m.group().trim();
-                }
-            }
-        }
-        return null;
-    }
-
-    Scanner(String input){
-        Scanner.input = input + " $";
+    Compiler_Scanner(String input){
+        Compiler_Scanner.input = input + " $";
 
         regexes.add(Pattern.compile( "^(EOF)" ));
         regexes.add(Pattern.compile( "^(public)" ));
