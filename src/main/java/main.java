@@ -7,7 +7,7 @@ public class main {
     public static void main(String args[])
     {
 
-        Compiler_Scanner compilerScanner1 = new Compiler_Scanner("public class idf { public static void main ( ) { int idf ; } } EOF");
+        Compiler_Scanner compilerScanner1 = new Compiler_Scanner("public class clss { public static void main ( ) { int kkl ; } } EOF");
         Parser parser1 = new Parser();
         parser1.something();
 

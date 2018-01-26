@@ -1,10 +1,12 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 class Compiler_Scanner {
     private static ArrayList<Pattern> regexes = new ArrayList<Pattern>();
     private static String input;
+    public static HashMap<String , Integer> symbolTable = new HashMap<>();
 
     static String nextToken() {
         for (Pattern p : regexes)
@@ -14,6 +16,7 @@ class Compiler_Scanner {
             {
                 if (p.pattern() == "^([a-zA-Z][a-zA-Z0-9_]*)")
                 {
+                    symbolTable.put(m.group(),m.group().hashCode());
                     input = m.replaceFirst("").trim();
                     return "idf";
                 }
@@ -28,6 +31,17 @@ class Compiler_Scanner {
                     input = m.replaceFirst("").trim();
                     return t;
                 }
+            }
+        }
+        return null;
+    }
+    static String peek_next_token(){
+        for (Pattern p : regexes)
+        {
+            Matcher m = p.matcher(input);
+            if (m.find())
+            {
+                return m.group();
             }
         }
         return null;

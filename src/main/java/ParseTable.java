@@ -1,8 +1,5 @@
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 
 class ParseTable {
@@ -172,7 +169,10 @@ class ParseTable {
             else
             {
                 if (pastWord != null && !pastWord.equals("->") && !pastWord.equals("\'\'")){
-                    terminals.add(pastWord);
+                    if (!pastWord.startsWith("#"))
+                    {
+                        terminals.add(pastWord);
+                    }
                     currentRule.add(pastWord);
                 }
             }
