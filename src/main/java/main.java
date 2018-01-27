@@ -6,17 +6,7 @@ public class main {
 
     public static void main(String args[])
     {
-
-        Compiler_Scanner compilerScanner1 = new Compiler_Scanner("public class clss { public static void main ( ) " +
-                "{ int a ;" +
-                "a = 5;" +
-                "if (a < 10){ a = a + 2;}else{}" +
-                " } } EOF");
-        Parser parser1 = new Parser();
-        parser1.something();
-
-
-
+        ArrayList <String> PB;
 
         String s = "class Cls{\n" +
                 " static boolean d ;\n" +
@@ -36,6 +26,29 @@ public class main {
                 "}\n" +
                 "}\n" +
                 "EOF";
+
+        Compiler_Scanner compilerScanner1 = new Compiler_Scanner(s);
+//                "class cls2 { static boolean cls2_a;" +
+//                "public static boolean meth2(int c , int d){ int e; return e + c ;} }" +
+//                "public class clss { public static void main ( ) " +
+//                "{ int a ;" +
+//                "int b ;" +
+//                "a = 5;" +
+//                "while ( a < 10 ) {a = a + 1;}" +
+//                "if (a < 10){ a = a + 2;}else{ a = 5;}" +
+//                " for (b = 0 ; b < 5 ; b += 1){ a = b ;}" +
+//                "System.out.println ( a + b ) ;" +
+//                "} } EOF");
+        Parser parser1 = new Parser();
+        PB = parser1.something();
+        for (int i = 0; i < PB.size(); i++) {
+            System.out.println(i + "\t" + PB.get(i));
+        }
+
+
+
+
+
 
 //        String S = " ";
 //        while (!s.equals(""))

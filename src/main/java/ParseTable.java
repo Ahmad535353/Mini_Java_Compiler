@@ -23,10 +23,10 @@ class ParseTable {
         parsingTable.put("ClassDeclaration_class",6);
         parsingTable.put("Extension_extends",7);
         parsingTable.put("Extension_{",8);
-        parsingTable.put("FieldsDeclarations_static",9);
-        parsingTable.put("FieldsDeclarations_public",10);
-        parsingTable.put("FieldsDeclarations_class",10);
-        parsingTable.put("FieldsDeclaration_static",11);
+        parsingTable.put("FieldDeclarations_static",9);
+        parsingTable.put("FieldDeclarations_public",10);
+        parsingTable.put("FieldDeclarations_class",10);
+        parsingTable.put("FieldDeclaration_static",11);
         parsingTable.put("VarDeclarations_boolean",12);
         parsingTable.put("VarDeclarations_int",12);
         parsingTable.put("VarDeclarations_EOF",13);
@@ -41,7 +41,7 @@ class ParseTable {
         parsingTable.put("VarDeclarations_return",13);
         parsingTable.put("VarDeclaration_boolean",14);
         parsingTable.put("VarDeclaration_int",14);
-        parsingTable.put("MethodDeclarations_pubic",15);
+        parsingTable.put("MethodDeclarations_public",15);
         parsingTable.put("MethodDeclarations_}",16);
         parsingTable.put("MethodDeclaration_public",17);
         parsingTable.put("Parameters_boolean",18);

@@ -100,6 +100,7 @@ class Compiler_Scanner {
         regexes.add(Pattern.compile( "^(;)" ));
         regexes.add(Pattern.compile( "^(,)" ));
         regexes.add(Pattern.compile( "^(boolean)" ));
+        regexes.add(Pattern.compile( "^(\\+=)" ));
         regexes.add(Pattern.compile( "^(int)" ));
         regexes.add(Pattern.compile( "^(if)" ));
         regexes.add(Pattern.compile( "^(else)" ));
