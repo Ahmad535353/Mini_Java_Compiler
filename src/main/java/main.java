@@ -7,7 +7,11 @@ public class main {
     public static void main(String args[])
     {
 
-        Compiler_Scanner compilerScanner1 = new Compiler_Scanner("public class clss { public static void main ( ) { int kkl ; } } EOF");
+        Compiler_Scanner compilerScanner1 = new Compiler_Scanner("public class clss { public static void main ( ) " +
+                "{ int a ;" +
+                "a = 5;" +
+                "if (a < 10){ a = a + 2;}else{}" +
+                " } } EOF");
         Parser parser1 = new Parser();
         parser1.something();
 

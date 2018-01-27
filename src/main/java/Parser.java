@@ -5,27 +5,33 @@ import java.util.LinkedList;
 public class Parser {
     private ArrayList<String > programBlock ;
     private int i;
-    private ArrayList <Integer> semanticStack ;
+    private ArrayList <String> semanticStack ;
     private static ParseTable parseTable1;
     private static LinkedList<String> parseStack;
     private static HashMap<String,Class_ST> symbolTable;
     private Class_ST currentClass;
     private Method_ST currentMethod;
+    HashMap<Integer, Integer> temps;
+    int tempAddress;
+    String save_id_to_know_if_class_or_var;
 
 
     public void something(){
         String top;
         String inputPointer;
-        inputPointer = Compiler_Scanner.nextToken();
+        String absInputPointer;
+        String absInputPointer1;
+
         top = parseStack.getLast();
         while (!top.equals("$")) {
+            inputPointer = Compiler_Scanner.getCurrentToken();
             if (isAction(top)){
                 //do action
                 action(parseStack.pollLast());
             }
             else if (isTerminal(top)){
                 if (top.equals(inputPointer)) {
-                    inputPointer = Compiler_Scanner.nextToken();
+                    Compiler_Scanner.next_token();
                     parseStack.pollLast();
                 }
                 else {
@@ -33,7 +39,7 @@ public class Parser {
                 }
             }
             else {
-                LinkedList<String> rule = parseTablePeek(top, inputPointer);
+                LinkedList<String> rule = (LinkedList<String>) parseTablePeek(top, inputPointer).clone();
                 parseStack.pollLast();
                 while (!rule.isEmpty()) {
                     parseStack.add(rule.pollLast());
@@ -47,21 +53,21 @@ public class Parser {
     private void action(String actionName) {
         if (actionName.equals("#save"))
         {
-            semanticStack.add(i);
+            semanticStack.add(Integer.toString(i));
             i++;
             // push i
             // i++
         }
         else if (actionName.equals("#main"))
         {
-            programBlock.set(semanticStack.get(semanticStack.size()-1),"(JP,"+i+",,)");
+            programBlock.set(Integer.valueOf(semanticStack.get(semanticStack.size()-1)),"(JP,"+i+",,)");
             semanticStack.remove(semanticStack.size()-1);
             // PB[topOfStack] = jump to i
             // pop
         }
         else if (actionName.equals("#check_and_add_to_class_symbol_table"))
         {
-            String nameOfClass = Compiler_Scanner.peek_next_token();
+            String nameOfClass = Compiler_Scanner.getCurrentTokenAbsVal();
             if (!symbolTable.containsKey(nameOfClass))
             {
                 Class_ST t = new Class_ST(nameOfClass);
@@ -76,7 +82,7 @@ public class Parser {
         }
         else if (actionName.equals("#check_existence_in_class_symbol_table"))
         {
-            String nameOfClass = Compiler_Scanner.peek_next_token();
+            String nameOfClass = Compiler_Scanner.getCurrentTokenAbsVal();
             if (!symbolTable.containsKey(nameOfClass))
             {
                 System.out.println("class " + nameOfClass + "doesn't exists.");
@@ -89,7 +95,7 @@ public class Parser {
         }
         else if (actionName.equals("#check_and_add_to_field_symbol_table"))
         {
-            String nameOfField = Compiler_Scanner.peek_next_token();
+            String nameOfField = Compiler_Scanner.getCurrentTokenAbsVal();
             if (!currentClass.fields.containsKey(nameOfField))
             {
                 Variable_ST t = new Variable_ST(nameOfField);
@@ -102,7 +108,7 @@ public class Parser {
         }
         else if (actionName.equals("#check_and_add_to_var_symbol_table"))
         {
-            String nameOfVar = Compiler_Scanner.peek_next_token();
+            String nameOfVar = Compiler_Scanner.getCurrentTokenAbsVal();
             if (!currentMethod.variables.containsKey(nameOfVar))
             {
                 Variable_ST t = new Variable_ST(nameOfVar);
@@ -113,13 +119,23 @@ public class Parser {
                 System.out.println("duplicate class " + nameOfVar);
             }
         }
+        else if (actionName.equals("#check_existence_in_var_symbol_table_and_push"))
+        {
+            String nameOfVar = Compiler_Scanner.getCurrentTokenAbsVal();
+            if (currentMethod.variables.containsKey(nameOfVar))
+            {
+                semanticStack.add(Integer.toString(currentMethod.variables.get(nameOfVar).address));
+            }
+            // check existence and push address
+        }
         else if (actionName.equals("#check_and_add_to_method_symbol_table"))
         {
-            String nameOfMethod = Compiler_Scanner.peek_next_token();
+            String nameOfMethod = Compiler_Scanner.getCurrentTokenAbsVal();
             if (!currentClass.methods.containsKey(nameOfMethod))
             {
                 Method_ST t = new Method_ST(nameOfMethod);
                 currentClass.methods.put(nameOfMethod, t);
+                currentMethod = t;
             }
             else
             {
@@ -128,7 +144,7 @@ public class Parser {
         }
         else if (actionName.equals("#check_and_add_to_param_symbol_table"))
         {
-            String nameOfParam = Compiler_Scanner.peek_next_token();
+            String nameOfParam = Compiler_Scanner.getCurrentTokenAbsVal();
             if (!currentMethod.inputs.containsKey(nameOfParam))
             {
                 Variable_ST t = new Variable_ST(nameOfParam);
@@ -142,10 +158,10 @@ public class Parser {
         else if (actionName.equals("#jpf_save"))
         {
             int topIndex = semanticStack.size() - 1;
-            programBlock.set(semanticStack.get(topIndex), "(JPF,"+semanticStack.get(topIndex)+","+(i+1)+",)");
+            programBlock.set(Integer.valueOf(semanticStack.get(topIndex)), "(JPF,"+semanticStack.get(topIndex)+","+(i+1)+",)");
             semanticStack.remove(topIndex);
             semanticStack.remove(topIndex-1);
-            semanticStack.add(i);
+            semanticStack.add(Integer.toString(i));
             i++;
             // PB[ss(top) <- (jpf,ss(top-1),i+1,)
             // pop(2)
@@ -162,7 +178,7 @@ public class Parser {
         }
         else if (actionName.equals("#label"))
         {
-            semanticStack.add(i);
+            semanticStack.add(Integer.toString(i));
             //push(i)
         }
         else if (actionName.equals("#while"))
@@ -179,18 +195,48 @@ public class Parser {
 //            i  i + 1;
 //            pop(3)
         }
-        else if (actionName.equals("#variable_symbol_table_check_for"))
+        else if (actionName.equals("#push_imm"))
         {
-            // check existence and push value
+//            int t = getTemp(Integer.valueOf(Compiler_Scanner.getCurrentTokenAbsVal()));
+//            semanticStack.add(t);
+            semanticStack.add("#" + Compiler_Scanner.getCurrentTokenAbsVal());
+        }
+        else if (actionName.equals("#push_one"))
+        {
+//            int t = getTemp(1);
+//            semanticStack.add(Integer.toString(t));
+            semanticStack.add("1");
+        }
+        else if (actionName.equals("#push_zero"))
+        {
+//            int t = getTemp(0);
+//            semanticStack.add(t);
+            semanticStack.add("0");
         }
         else if (actionName.equals("#assign"))
         {
+            int topIndex = semanticStack.size() - 1;
+            programBlock.set(i,"(ASSIGN, "+semanticStack.get(topIndex)+ ", "+semanticStack.get(topIndex-1)+",)");
+            i++;
+            semanticStack.remove(topIndex);
+            semanticStack.remove(topIndex-1);
 //            PB[i] <- (:=, ss(top), ss(top-1),);
 //            i ++;
 //            pop(2)
         }
         else if (actionName.equals("#for"))
         {
+            int topIndex = semanticStack.size()-1;
+            programBlock.set(i, "(ADD, "+semanticStack.get(topIndex) + " , " + semanticStack.get(topIndex-1) + " , "
+            + semanticStack.get(topIndex-1));
+            i++;
+            programBlock.set(i, "(JP, " + (Integer.valueOf(semanticStack.get(topIndex-2))-1) + ",, ");
+            i++;
+            programBlock.set(Integer.valueOf(semanticStack.get(topIndex - 2)) , "(JPF, " + semanticStack.get(topIndex - 3)+ ", " + i);
+            semanticStack.remove(topIndex);
+            semanticStack.remove(topIndex-1);
+            semanticStack.remove(topIndex-2);
+            semanticStack.remove(topIndex-3);
 
 //                          jump(destination address, condition)
 //                          add(first,second,destination)
@@ -203,6 +249,10 @@ public class Parser {
         }
         else if (actionName.equals("#print"))
         {
+            int topIndex = semanticStack.size()-1;
+            programBlock.set(i, "(PRINT, " + semanticStack.get(topIndex) + ",,");
+            i++;
+            semanticStack.remove(topIndex);
 //            PB[i] <- (print,ss(top))
 //            i++
 //            pop
@@ -210,18 +260,39 @@ public class Parser {
         }
         else if (actionName.equals("#add"))
         {
+            int topIndex = semanticStack.size()-1;
+            int t = getTemp(0);
+            programBlock.set(i, "(ADD, " + semanticStack.get(topIndex) + ", " + semanticStack.get(topIndex-1) + ", " + t);
+            i++;
+            semanticStack.remove(topIndex);
+            semanticStack.remove(topIndex-1);
+            semanticStack.add(Integer.toString(t));
 //            t <- gettemp
 //            PB[i] <- (+ , ss(top), ss(top-1), t);
 //            i++ ; pop(2); push(t)
         }
         else if (actionName.equals("#sub"))
         {
+            int topIndex = semanticStack.size()-1;
+            int t = getTemp(0);
+            programBlock.set(i, "(SUB, " + semanticStack.get(topIndex) + ", " + semanticStack.get(topIndex-1) + ", " + t);
+            i++;
+            semanticStack.remove(topIndex);
+            semanticStack.remove(topIndex-1);
+            semanticStack.add(Integer.toString(t));
             //            t <- gettemp
 //            PB[i] <- (- , ss(top), ss(top-1), t);
 //            i++ ; pop(2); push(t)
         }
         else if (actionName.equals("#mult"))
         {
+            int topIndex = semanticStack.size()-1;
+            int t = getTemp(0);
+            programBlock.set(i, "(MULT, " + semanticStack.get(topIndex) + ", " + semanticStack.get(topIndex-1) + ", " + t);
+            i++;
+            semanticStack.remove(topIndex);
+            semanticStack.remove(topIndex-1);
+            semanticStack.add(Integer.toString(t));
 //            t <- gettemp
 //            PB[i] <- (* , ss(top), ss(top-1), t);
 //            i++ ; pop(2); push(t)
@@ -248,15 +319,41 @@ public class Parser {
         }
         else if (actionName.equals("#equal"))
         {
+            int topIndex = semanticStack.size()-1;
+            int t = getTemp(0);
+            programBlock.set(i, "(EQ, " + semanticStack.get(topIndex) + ", " + semanticStack.get(topIndex-1) + ", " + t);
+            i++;
+            semanticStack.remove(topIndex);
+            semanticStack.remove(topIndex-1);
+            semanticStack.add(Integer.toString(t));
 //            t <- gettemp
 //            PB[i] <- (EQ , ss(top), ss(top-1), t);
 //            i++ ; pop(2); push(t)
         }
         else if (actionName.equals("#less"))
         {
+            int topIndex = semanticStack.size()-1;
+            int t = getTemp(0);
+            programBlock.set(i, "(LT, " + semanticStack.get(topIndex) + ", " + semanticStack.get(topIndex-1) + ", " + t);
+            i++;
+            semanticStack.remove(topIndex);
+            semanticStack.remove(topIndex-1);
+            semanticStack.add(Integer.toString(t));
 //            t <- gettemp
 //            PB[i] <- (LT , ss(top), ss(top-1), t);
 //            i++ ; pop(2); push(t)
+        }
+        else if (actionName.equals("#save_id_to_know_if_class_or_var"))
+        {
+            save_id_to_know_if_class_or_var = Compiler_Scanner.getCurrentTokenAbsVal();
+        }
+        else if (actionName.equals("#so_it_was_variable"))
+        {
+            String nameOfVar = save_id_to_know_if_class_or_var;
+            if (currentMethod.variables.containsKey(nameOfVar))
+            {
+                semanticStack.add(Integer.toString(currentMethod.variables.get(nameOfVar).address));
+            }
         }
     }
 
@@ -271,6 +368,11 @@ public class Parser {
     public static LinkedList<String> parseTablePeek(String nonTerminal, String terminal) {
         return ParseTable.getRule(nonTerminal, terminal);
     }
+    public int getTemp(int val){
+        tempAddress += 4;
+        temps.put(tempAddress,val);
+        return tempAddress;
+    }
 
     Parser(){
         parseTable1 = new ParseTable();
@@ -279,7 +381,12 @@ public class Parser {
         parseStack.add("Goal");
         semanticStack = new ArrayList<>();
         programBlock = new ArrayList<>(1000);
+        for (int j = 0; j < 15; j++) {
+            programBlock.add(String.valueOf(j));
+        }
         i = 0;
         symbolTable = new HashMap<>();
+        tempAddress = 996;
+        temps = new HashMap<>();
     }
 }
