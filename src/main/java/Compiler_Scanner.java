@@ -19,6 +19,13 @@ class Compiler_Scanner {
     }
     static void next_token(){
         input = m.replaceFirst("").trim();
+
+        if (!input.isEmpty() && input.charAt(0) == '/' && input.charAt(1) == '*')
+        {
+            int j = input.indexOf("*\\");
+            input = input.substring(j + 2);
+        }
+        input = input.trim();
         for (Pattern p : regexes)
         {
             m = p.matcher(input);
@@ -119,6 +126,13 @@ class Compiler_Scanner {
         regexes.add(Pattern.compile( "^(\\$)" ));
         regexes.add(Pattern.compile( "^([a-zA-Z][a-zA-Z0-9_]*)" ));
         regexes.add(Pattern.compile( "^([0-9]+)" ));
+//        regexes.add(Pattern.compile( "^([+|-]?[0-9]+)" ));
+
+        if (!input.isEmpty() && input.charAt(0) == '/' && input.charAt(1) == '*')
+        {
+            int j = input.indexOf("*\\");
+            input = input.substring(j + 2);
+        }
 
         for (Pattern p : regexes)
         {

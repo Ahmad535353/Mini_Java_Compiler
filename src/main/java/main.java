@@ -7,14 +7,13 @@ public class main {
     public static void main(String args[])
     {
         ArrayList <String> PB;
-
-        String s = "class Cls{\n" +
+        String s = "/*ahmad comment*\\class Cls{\n" +
                 " static boolean d ;\n" +
                 "public static int test (int a, boolean b ) {\n" +
                 "int c;\n" +
                 "c = 1;\n" +
-                "b=true;\n" +
-                "return a + c;\n" +
+                "b=c;\n" +
+                "return a /*ahmad comment*\\ + c;\n" +
                 "}\n" +
                 "}\n" +
                 "public class Cls2{\n" +
@@ -26,7 +25,6 @@ public class main {
                 "}\n" +
                 "}\n" +
                 "EOF";
-
         Compiler_Scanner compilerScanner1 = new Compiler_Scanner(s);
 //                "class cls2 { static boolean cls2_a;" +
 //                "public static boolean meth2(int c , int d){ int e; return e + c ;} }" +

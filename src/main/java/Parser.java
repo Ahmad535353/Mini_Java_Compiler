@@ -3,6 +3,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 
 public class Parser {
+    public static HashMap <Integer, Variable_ST> allVars = new HashMap<>();
     int numOfClassesSoFar = 0 ;
     private ArrayList<String > programBlock ;
     private int i;
@@ -48,7 +49,7 @@ public class Parser {
                     parseStack.add(rule.pollLast());
                 }
             }
-            System.out.println(parseStack);
+//            System.out.println(parseStack);
             top = parseStack.peekLast();
         }
 //        System.out.println(programBlock);
@@ -71,7 +72,7 @@ public class Parser {
             // PB[topOfStack] = jump to i
             // pop
         }
-        else if (actionName.equals("save_type"))
+        else if (actionName.equals("#save_type"))
         {
             lastTypeRead = Compiler_Scanner.getCurrentTokenAbsVal();
         }
@@ -87,7 +88,7 @@ public class Parser {
             }
             else
             {
-                System.out.println("duplicate class " + nameOfClass);
+                System.out.println("duplicate class with name: " + nameOfClass);
             }
             // id to symbol table class
         }
@@ -227,18 +228,21 @@ public class Parser {
         {
 //            int t = getTemp(1);
 //            semanticStack.add(Integer.toString(t));
-            semanticStack.add("1");
+            semanticStack.add("true");
         }
         else if (actionName.equals("#push_zero"))
         {
 //            int t = getTemp(0);
 //            semanticStack.add(t);
-            semanticStack.add("0");
+            semanticStack.add("false");
         }
         else if (actionName.equals("#assign"))
         {
             int topIndex = semanticStack.size() - 1;
-            programBlock.set(i,"(ASSIGN, "+semanticStack.get(topIndex)+ ", "+semanticStack.get(topIndex-1)+",)");
+            String first = semanticStack.get(topIndex);
+            String second = semanticStack.get(topIndex-1);
+            check_type(first,second);
+            programBlock.set(i,"(ASSIGN, "+first+ ", "+second+",)");
             i++;
             semanticStack.remove(topIndex);
             semanticStack.remove(topIndex-1);
@@ -283,8 +287,11 @@ public class Parser {
         else if (actionName.equals("#add"))
         {
             int topIndex = semanticStack.size()-1;
+            String first = semanticStack.get(topIndex);
+            String second = semanticStack.get(topIndex-1);
             int t = getTemp(0);
-            programBlock.set(i, "(ADD, " + semanticStack.get(topIndex) + ", " + semanticStack.get(topIndex-1) + ", " + t + ")");
+            check_type(first,second);
+            programBlock.set(i, "(ADD, " + first + ", " + second + ", " + t + ")");
             i++;
             semanticStack.remove(topIndex);
             semanticStack.remove(topIndex-1);
@@ -296,7 +303,10 @@ public class Parser {
         else if (actionName.equals("#sub"))
         {
             int topIndex = semanticStack.size()-1;
+            String first = semanticStack.get(topIndex);
+            String second = semanticStack.get(topIndex-1);
             int t = getTemp(0);
+            check_type(first,second);
             programBlock.set(i, "(SUB, " + semanticStack.get(topIndex) + ", " + semanticStack.get(topIndex-1) + ", " + t);
             i++;
             semanticStack.remove(topIndex);
@@ -309,7 +319,10 @@ public class Parser {
         else if (actionName.equals("#mult"))
         {
             int topIndex = semanticStack.size()-1;
+            String first = semanticStack.get(topIndex);
+            String second = semanticStack.get(topIndex-1);
             int t = getTemp(0);
+            check_type(first,second);
             programBlock.set(i, "(MULT, " + semanticStack.get(topIndex) + ", " + semanticStack.get(topIndex-1) + ", " + t);
             i++;
             semanticStack.remove(topIndex);
@@ -341,6 +354,10 @@ public class Parser {
                 semanticStack.add(Integer.toString(currentMethod.outputAddress + 4));
                 semanticStack.add(Integer.toString(currentMethod.outputAddress + 4));
             }
+            else
+            {
+                System.out.println("Semantic error: method needs no parameter.");
+            }
 //            push methods first parameter in stack twice
         }
         else if (actionName.equals("#return_to_caller"))
@@ -348,17 +365,21 @@ public class Parser {
             programBlock.set(i, "(JMP,@"+currentMethod.getCallerAddressSlot()+",,)");
             currentMethod.outputAddress = Integer.valueOf(semanticStack.get(semanticStack.size()-1));
             semanticStack.remove(semanticStack.size()-1);
+            i++;
 //            PB[i] <- (jmp,@method_return_slot)
         }
         else if (actionName.equals("#pop"))
         {
             semanticStack.remove(semanticStack.size()-1);
         }
-        else if (actionName.equals("#call_method(jump_i+2_and_fill_caller_slot)"))
+        else if (actionName.equals("#call_method"))
         {
             int topIndex = semanticStack.size()-1;
-            programBlock.set(i,"(ASSIGN, "+ (i+2) + ", "+currentMethod.getCallerAddressSlot()+",)");
+            programBlock.set(i,"(ASSIGN, #"+ (i+2) + ", "+currentMethod.getCallerAddressSlot()+",)");
+            i++;
             programBlock.set(i,"(JP, "+ currentMethod.firstLineAddress + ", ,)");
+            i++;
+            semanticStack.add(Integer.toString(currentMethod.outputAddress));
         }
         else if (actionName.equals("#equal"))
         {
@@ -386,6 +407,16 @@ public class Parser {
 //            PB[i] <- (LT , ss(top), ss(top-1), t);
 //            i++ ; pop(2); push(t)
         }
+        else if (actionName.equals("#and"))
+        {
+            int t = getTemp(0);
+            int topIndex = semanticStack.size() - 1;
+            programBlock.set(i, "(AND, "+semanticStack.get(topIndex)+", " + semanticStack.get(topIndex-1)+ ",)");
+            i++;
+            semanticStack.remove(topIndex);
+            semanticStack.remove(topIndex-1);
+            semanticStack.add(Integer.toString(t));
+        }
         else if (actionName.equals("#save_id_to_know_if_class_or_var"))
         {
             save_id_to_know_if_class_or_var = Compiler_Scanner.getCurrentTokenAbsVal();
@@ -411,11 +442,59 @@ public class Parser {
         else if (actionName.equals("#so_it_was_method"))
         {
             currentClass = symbolTable.get(save_id_to_know_if_class_or_var);
-            currentMethod = currentClass.getMethod(save_id_to_know_if_method_or_var);
-            symbolTable.get(save_id_to_know_if_class_or_var).getMethod(save_id_to_know_if_method_or_var);
+            currentMethod = currentClass.get_method(save_id_to_know_if_method_or_var);
+            symbolTable.get(save_id_to_know_if_class_or_var).get_method(save_id_to_know_if_method_or_var);
         }
-        else if (actionName.equals("#so_it_was_variable"))
+        else if (actionName.equals("#so_it_was_field"))
         {
+            Variable_ST c = symbolTable.get(save_id_to_know_if_class_or_var).get_field(save_id_to_know_if_method_or_var);
+            semanticStack.add(Integer.toString(c.getAddress()));
+        }
+    }
+
+    private void check_type(String first, String second) {
+        if (first.startsWith("#"))
+        {
+            if (allVars.containsKey(Integer.valueOf(second)) && !allVars.get(Integer.valueOf(second)).getType().equals("int"))
+            {
+                System.out.println("Semantic error. type mismatch : "+ first +" , "+
+                        allVars.get(Integer.valueOf(second)).name);
+            }
+        }
+        else if (second.startsWith("#"))
+        {
+            if (allVars.containsKey(Integer.valueOf(first)) && !allVars.get(Integer.valueOf(first)).getType().equals("int"))
+            {
+                System.out.println("Semantic error. type mismatch : "+ second +" , "+
+                        allVars.get(Integer.valueOf(first)).name);
+            }
+        }
+        else if (first.equals("true") || first.equals("false") )
+        {
+            if (allVars.containsKey(Integer.valueOf(second)) && !allVars.get(Integer.valueOf(second)).getType().equals("boolean"))
+            {
+                System.out.println("Semantic error. type mismatch : "+ first +" , "+
+                        allVars.get(Integer.valueOf(second)).name);
+            }
+        }
+        else if (second.equals("true") || second.equals("false"))
+        {
+            if (allVars.containsKey(Integer.valueOf(first)) && !allVars.get(Integer.valueOf(first)).getType().equals("boolean"))
+            {
+                System.out.println("Semantic error. type mismatch : "+ second +" , "+
+                        allVars.get(Integer.valueOf(first)).name);
+            }
+        }
+        else
+        {
+            if (allVars.containsKey(Integer.valueOf(first)) && allVars.containsKey(Integer.valueOf(second)))
+            {
+                if (!allVars.get(Integer.valueOf(first)).getType().equals(allVars.get(Integer.valueOf(second)).getType()))
+                {
+                    System.out.println("Semantic error. type mismatch : "+ allVars.get(Integer.valueOf(second)).name +" , "+
+                            allVars.get(Integer.valueOf(first)).name);
+                }
+            }
         }
     }
 
